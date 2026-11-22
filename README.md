@@ -1,6 +1,6 @@
 ﻿# FMD Configurator
 
-A browser-based configuration and C code generation tool for the FMD FT61EC2x microcontroller family. Select a device, configure supported peripherals and pins, and generate a starting point for an FMD compiler project.
+A browser-based configuration and C code generation tool for the FMD FT61EC2x and FT60E21x microcontroller families. Select a device, configure supported peripherals and pins, and generate a starting point for an FMD compiler project.
 
 ## Getting started
 
@@ -19,7 +19,7 @@ Open `http://localhost:8000` in a browser. No third-party packages are required 
 - C code generation with `FMD_Init()`, a `main()` function, and empty application setup and loop sections.
 - Save and load project configurations; light and dark themes.
 
-Supported options depend on the selected device and package. Peripheral support is partial: consult the datasheet and generated code for the supported modes. Configuration bits, some peripheral modes, and other device features are not fully implemented. Representative configurations have been compiled, but hardware testing has not been performed.
+FT60E210 and FT60E211 currently support clock, GPIO, Timer0, Timer2, watchdog, timer interrupts, basic PWM and VDD low-voltage detection. Advanced PWM output routing is not yet implemented. Fault-source selection, primary channel fault output states, and automatic or manual resume are supported. FT60E21x PWM supports a shared period, channel polarity, deadband and continuous, one-pulse or buzzer mode. FT60E21x LVD supports VDD and available external inputs, polarity, debounce and interrupts. Supported options depend on the selected device and package. Peripheral support is partial: consult the datasheet and generated code for the supported modes. Configuration bits, some peripheral modes, and other device features are not fully implemented. Representative configurations have been compiled, but hardware testing has not been performed.
 
 ## Tests
 
@@ -50,3 +50,5 @@ The compiler test defaults to the locally installed FMD GCC8 path. Set `FMD_COMP
 ## Third-party materials
 
 The FT61EC2x datasheet and FMD compiler are separate third-party materials. Local reference copies of vendor headers and the extracted datasheet text are excluded from Git because their redistribution terms have not been established. See `docs/SOURCE.md` for source notes.
+
+Interrupt source setup leaves global interrupts disabled. Provide an appropriate ISR and enable GIE in application code after initialization. GPIO, Timer0 and watchdog coverage remains limited to the implemented options; see `docs/CAPABILITY-CHECKLIST.md` for outstanding work.

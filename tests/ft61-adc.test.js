@@ -1,0 +1,13 @@
+﻿import test from 'node:test';
+import assert from 'node:assert/strict';
+import {devices} from '../src/data/devices.js';
+import {ft61AdcDefaults,validateFt61Adc,generateFt61Adc} from '../src/core/ft61-adc.js';
+const big=devices.find(d=>d.id==='FT61EC23');
+function project(){return {pins:{},peripherals:{adcRef:0,...ft61AdcDefaults}};}
+test('ADC default preserves old 10-bit right-justified configuration',()=>{const p=project();p.pins.PA1='AN1';validateFt61Adc(p,big);const c=generateFt61Adc(p).join('\n');assert.match(c,/ADCON1 = 0x60/);assert.match(c,/ADCON0 = 0x85/);assert.match(c,/ANSEL \|= \(1u << 1\)/);});
+test('external VREF and ADC clock/format settings use the datasheet bits',()=>{const p=project();p.pins={PC0:'ADC VREF',PA1:'AN1'};Object.assign(p.peripherals,{adcRef:3,ft61AdcDivs:1,ft61AdcClock:4,ft61AdcFormat:0,ft61AdcFirst:1});validateFt61Adc(p,big);const c=generateFt61Adc(p).join('\n');assert.match(c,/ANSEL \|= \(1u << 4\)/);assert.match(c,/TRISC \|= \(1u << 0\)/);assert.match(c,/ADCON1 = 0xC0/);assert.match(c,/ADCON0 = 0x65/);p.pins.PC0='GPIO output';assert.throws(()=>validateFt61Adc(p,big));});
+test('internal VDD/4 input enables ANSEL7 with no package pin',()=>{const p=project();p.peripherals.ft61AdcFirst=7;validateFt61Adc(p,big);const c=generateFt61Adc(p).join('\n');assert.match(c,/ANSEL \|= \(1u << 7\)/);assert.match(c,/ADCON0 = 0x9D/);});
+test('initial external channel must be among assigned inputs',()=>{const p=project();p.pins.PA1='AN1';p.peripherals.ft61AdcFirst=2;assert.throws(()=>validateFt61Adc(p,big));p.peripherals.ft61AdcFirst=1;assert.doesNotThrow(()=>validateFt61Adc(p,big));});
+
+test('integrated generator supports external VREF and explicit channel',async()=>{const {createProject,validateProject}=await import('../src/core/project.js');const {generateInit}=await import('../src/core/generator.js');const p=createProject();p.device='FT61EC23';p.pins={PC0:'ADC VREF',PA1:'AN1'};Object.assign(p.peripherals,{adcRef:3,ft61AdcFirst:1,ft61AdcDivs:1,ft61AdcClock:4,ft61AdcFormat:0});assert.doesNotThrow(()=>validateProject(p));const c=generateInit(p);assert.match(c,/ADCON1 = 0xC0/);assert.match(c,/ADCON0 = 0x65/);assert.match(c,/TRISC \|= \(1u << 0\)/);p.device='FT61EC21B';assert.throws(()=>validateProject(p));});
+test('integrated generator supports internal VDD/4 and protects the VREF assignment',async()=>{const {createProject,validateProject}=await import('../src/core/project.js');const {generateInit}=await import('../src/core/generator.js');const p=createProject();p.device='FT61EC23';p.peripherals.ft61AdcFirst=7;assert.match(generateInit(p),/ADCON0 = 0x9D/);p.pins.PC0='ADC VREF';assert.throws(()=>validateProject(p));p.peripherals.adcRef=3;assert.doesNotThrow(()=>validateProject(p));});
