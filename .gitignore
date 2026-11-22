@@ -1,0 +1,16 @@
+﻿# Generated files and dependencies
+/build/
+/dist/
+/node_modules/
+coverage/
+*.log
+
+# Local vendor references and datasheet extract; redistribution terms unknown
+/vendor/fmdide-reference/
+/docs/datasheet-extract.txt
+
+# Editor and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
